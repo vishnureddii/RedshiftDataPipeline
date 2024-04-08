@@ -1,0 +1,113 @@
+Data Cleaning (Final Not to be changed):
+
+-- Dropping the column mother_race
+alter table data
+drop column mother_race;
+
+-- Dropping the column father_race
+alter table data
+drop column father_race;
+
+-- filling the null values in the born_alive_alive, born_alive_dead, born_dead
+update data
+set born_alive_alive = COALESCE(born_alive_alive, 0), 
+    born_alive_dead = COALESCE(born_alive_dead, 0),
+    born_dead = COALESCE(born_dead, 0)
+where born_alive_alive is null or born_alive_dead is null or born_dead is null;
+
+-- Fillinf the null values in the cigarettes_per_day, drinks_per_week column
+update data 
+set cigarettes_per_day = COALESCE(cigarettes_per_day, 0),
+    drinks_per_week = COALESCE(drinks_per_week, 0)
+where cigarettes_per_day is null or drinks_per_week is null;
+
+-- filling the null values in the cigarette_use, alcohol_use
+update data 
+set cigarette_use = COALESCE(cigarette_use, false),
+    alcohol_use = COALESCE(alcohol_use, false)
+where cigarette_use is null or alcohol_use is null;
+
+
+-- Filling the null values in the weight_gain_pounds
+update data
+set weight_gain_pounds = COALESCE(weight_gain_pounds, (select round(AVG(weight_gain_pounds)) from data))
+where weight_gain_pounds is null;
+
+-- Filling the null values in the gestation_weeks
+update data
+set gestation_weeks = COALESCE(gestation_weeks, (select ROUND(avg(gestation_weeks)) from data))
+where gestation_weeks is null;
+
+-- Filling the null values in the ever born 
+update data
+set ever_born = COALESCE(ever_born, 0)
+where ever_born is null;
+
+-- Dropping the null values in weight_pounds, apgar_5min
+delete from data 
+where weight_pounds is null or apgar_5min is null;
+
+
+-- Adding a week day column
+alter table data
+ADD week_day varchar(20);
+
+UPDATE data
+SET week_day = 
+    CASE
+        WHEN wday = 1 THEN 'Sunday'
+        WHEN wday = 2 THEN 'Monday'
+        WHEN wday = 3 THEN 'Tuesday'
+        WHEN wday = 4 THEN 'Wednesday'
+        WHEN wday = 5 THEN 'Thursday'
+        WHEN wday = 6 THEN 'Friday'
+        WHEN wday = 7 THEN 'Saturday'
+        ELSE NULL 
+    END;
+
+-- Dropping the rows were father_age is greater than 80
+DELETE from data
+where father_age >= 80;
+
+
+-- Adding the column infant health 
+alter table data
+ADD infant_health varchar(20);
+
+UPDATE data
+SET infant_health = 
+    CASE
+        WHEN weight_pounds >= 6.0 AND apgar_5min BETWEEN 7 AND 10 THEN 'normal'
+        WHEN weight_pounds >= 6.0 AND apgar_5min BETWEEN 4 AND 6 THEN 'moderately normal'
+        ELSE 'abnormal'
+    END;
+
+
+-- Adding the column birth_status
+alter table data
+ADD birth_status varchar(25);
+
+UPDATE data
+SET birth_status = CASE
+    WHEN gestation_weeks > 37 THEN 'Full Term'
+    WHEN gestation_weeks BETWEEN 32 AND 37 THEN 'Moderate Preterm'
+    WHEN gestation_weeks BETWEEN 28 AND 31 THEN 'Very Preterm'
+    WHEN gestation_weeks < 28 THEN 'Extremely Preterm'
+    ELSE 'Unknown' 
+END;
+
+-- Adding the column birth_status
+alter table data
+add gender varchar(25);
+
+UPDATE data
+set gender = 
+    case 
+        when is_male = true then 'BOY'
+        when is_male = false then 'GIRL'
+    end;
+
+
+select * from data;
+
+select count(*) from data;

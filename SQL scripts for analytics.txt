@@ -1,0 +1,235 @@
+Queries Final (Not to be changed now): 
+
+-- Average weight of babies by gender 
+SELECT 
+    case
+        when is_male = false then 'GIRL'
+        when is_male = true then 'BOY'
+    end as GENDER,
+    round(AVG(weight_pounds), 2) as avg_weight
+FROM natality_1103
+GROUP BY is_male;
+
+-- Number of babies born each month:
+SELECT month, COUNT(*) AS births
+FROM natality_1103
+GROUP BY month
+ORDER BY month;
+
+-- Number of births by days
+select week_day, count(record_weight) as c
+from (
+    select 
+        case 
+            when wday = 1 then 'Sunday'
+            when wday = 2 then 'Monday'
+            when wday = 3 then 'Tuesday'
+            when wday = 4 then 'Wednesday'
+            when wday = 5 then 'Thursday'
+            when wday = 6 then 'Friday'
+            when wday = 7 then 'Saturday'
+        end as week_day,
+        record_weight, wday
+    from natality_1103
+)
+group by week_day, wday
+order by wday;
+
+-- Identifying the unusual birth weights 
+SELECT weight_pounds
+FROM natality_1103
+WHERE weight_pounds < (SELECT AVG(weight_pounds) - (2 * STDDEV(weight_pounds)) FROM natality_1103)
+   OR weight_pounds > (SELECT AVG(weight_pounds) + (2 * STDDEV(weight_pounds)) FROM natality_1103);
+
+--Correlation Between Birth Weight and Gestation Weeks:
+select gestation_weeks,round(avg(weight_pounds), 1) as avg_weight
+from natality_1103
+group by gestation_weeks
+order by gestation_weeks;
+
+-- Finding the average weight gain during pregnancy by plurality (number of babies born together):
+SELECT plurality, round(AVG(weight_gain_pounds), 2) AS avg_weight_gain
+FROM natality_1103
+GROUP BY plurality;
+
+-- Identify the distribution of birth statuses (e.g., Full Term, Moderate Preterm) by infant gender:
+SELECT gender, birth_status, COUNT(*) AS num_births
+FROM natality_1103
+GROUP BY gender, birth_status;
+
+-- Identify the distribution of birth weights (e.g., low birth weight, normal birth weight, high birth weight) among infants:
+SELECT CASE
+         WHEN weight_pounds < 6.0 THEN 'Low Birth Weight'
+         WHEN weight_pounds >= 6.0 AND weight_pounds <= 8.8 THEN 'Normal Birth Weight'
+         ELSE 'High Birth Weight'
+       END AS birth_weight_category,
+       COUNT(*) AS num_births
+FROM natality_1103
+GROUP BY birth_weight_category;
+
+-- Identify the distribution of births by gestation weeks:
+SELECT gestation_weeks, COUNT(*) AS num_births
+FROM natality_1103
+GROUP BY gestation_weeks
+ORDER BY gestation_weeks;
+
+-- Average gestation weeks by mother's age group:
+SELECT
+    CASE
+        WHEN mother_age BETWEEN 15 AND 19 THEN '15-19'
+        WHEN mother_age BETWEEN 20 AND 24 THEN '20-24'
+        WHEN mother_age BETWEEN 25 AND 29 THEN '25-29'
+        WHEN mother_age BETWEEN 30 AND 34 THEN '30-34'
+        WHEN mother_age BETWEEN 35 AND 39 THEN '35-39'
+        ELSE '40+'
+    END AS age_group,
+    round(cast(AVG(gestation_weeks) as FLOAT4), 3) AS average_gestation_weeks
+FROM natality_1103
+GROUP BY age_group
+ORDER BY age_group;
+
+--  Percentage of babies with a high Apgar score (e.g., Apgar score >= 8) by gender:
+SELECT 
+    gender,
+    SUM(CASE WHEN apgar_5min >= 8 THEN 1 ELSE 0 END) AS high_apgar_count,
+    COUNT(*) AS total_babies,
+    (SUM(CASE WHEN apgar_5min >= 8 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) AS percentage_high_apgar
+FROM natality_1103
+GROUP BY gender;
+
+--  Average weight of babies by mother's marital status:
+SELECT
+    CASE
+        WHEN mother_married THEN 'Married'
+        ELSE 'Unmarried'
+    END AS marital_status,
+    round(AVG(weight_pounds), 2) AS average_weight
+FROM natality_1103
+GROUP BY marital_status;
+
+
+--  Average weight of babies born to mothers who smoked during pregnancy vs. those who did not:
+SELECT
+    CASE
+        WHEN cigarette_use THEN 'Smokers'
+        ELSE 'Non-smokers'
+    END AS smoker_status,
+    round(AVG(weight_pounds), 2) AS average_weight
+FROM  natality_1103
+GROUP BY smoker_status;
+
+
+--  Average weight of babies by mother's age group and marital status:
+SELECT
+    CASE
+        WHEN mother_age BETWEEN 15 AND 19 THEN '15-19'
+        WHEN mother_age BETWEEN 20 AND 24 THEN '20-24'
+        WHEN mother_age BETWEEN 25 AND 29 THEN '25-29'
+        WHEN mother_age BETWEEN 30 AND 34 THEN '30-34'
+        WHEN mother_age BETWEEN 35 AND 39 THEN '35-39'
+        ELSE '40+'
+    END AS age_group,
+    CASE
+        WHEN mother_married THEN 'Married'
+        ELSE 'Unmarried'
+    END AS marital_status,
+    round(AVG(weight_pounds), 3) AS average_weight
+FROM natality_1103
+GROUP BY age_group, marital_status
+ORDER BY age_group, marital_status;
+
+
+--  Average weight of babies by mother's age group and alcohol consumption status:
+SELECT
+    CASE
+        WHEN mother_age BETWEEN 15 AND 19 THEN '15-19'
+        WHEN mother_age BETWEEN 20 AND 24 THEN '20-24'
+        WHEN mother_age BETWEEN 25 AND 29 THEN '25-29'
+        WHEN mother_age BETWEEN 30 AND 34 THEN '30-34'
+        WHEN mother_age BETWEEN 35 AND 39 THEN '35-39'
+        ELSE '40+'
+    END AS age_group,
+    CASE
+        WHEN alcohol_use THEN 'Alcohol Consumer'
+        ELSE 'Non-Alcohol Consumer'
+    END AS alcohol_status,
+    AVG(weight_pounds) AS average_weight
+FROM natality_1103
+GROUP BY age_group, alcohol_status
+ORDER BY age_group, alcohol_status;
+
+--  Average weight of babies by father's age group:
+SELECT
+    CASE
+        WHEN father_age BETWEEN 15 AND 19 THEN '15-19'
+        WHEN father_age BETWEEN 20 AND 24 THEN '20-24'
+        WHEN father_age BETWEEN 25 AND 29 THEN '25-29'
+        WHEN father_age BETWEEN 30 AND 34 THEN '30-34'
+        WHEN father_age BETWEEN 35 AND 39 THEN '35-39'
+        ELSE '40+'
+    END AS age_group,
+    round(AVG(weight_pounds), 2) AS average_weight
+FROM natality_1103
+GROUP BY age_group
+ORDER BY age_group;
+
+
+--  Percentage of babies born alive vs. dead by mother's age group:
+SELECT
+    CASE
+        WHEN mother_age BETWEEN 15 AND 19 THEN '15-19'
+        WHEN mother_age BETWEEN 20 AND 24 THEN '20-24'
+        WHEN mother_age BETWEEN 25 AND 29 THEN '25-29'
+        WHEN mother_age BETWEEN 30 AND 34 THEN '30-34'
+        WHEN mother_age BETWEEN 35 AND 39 THEN '35-39'
+        ELSE '40+'
+    END AS age_group,
+    SUM(born_alive_alive) AS born_alive,
+    SUM(born_alive_dead) AS born_dead,
+    round((SUM(born_alive_alive) * 100.0 / (SUM(born_alive_alive) + SUM(born_alive_dead))), 2) AS percentage_born_alive
+FROM natality_1103
+GROUP BY age_group
+ORDER BY age_group;
+
+--  Percentage of babies with a high Apgar score (e.g., Apgar score >= 8) by father's age group:
+SELECT 
+    CASE
+        WHEN father_age BETWEEN 15 AND 19 THEN '15-19'
+        WHEN father_age BETWEEN 20 AND 24 THEN '20-24'
+        WHEN father_age BETWEEN 25 AND 29 THEN '25-29'
+        WHEN father_age BETWEEN 30 AND 34 THEN '30-34'
+        WHEN father_age BETWEEN 35 AND 39 THEN '35-39'
+        ELSE '40+'
+    END AS age_group,
+    SUM(CASE WHEN apgar_5min >= 8 THEN 1 ELSE 0 END) AS high_apgar_count,
+    COUNT(*) AS total_babies,
+    round((SUM(CASE WHEN apgar_5min >= 8 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)), 2) AS percentage_high_apgar
+FROM natality_1103
+GROUP BY age_group
+ORDER BY age_group;
+
+--  Percentage of babies born prematurely (gestation weeks < 37) by mother's age-group, with comparison to overall premature birth rate:
+WITH premature_births AS (
+    SELECT
+        CASE
+            WHEN mother_age BETWEEN 15 AND 19 THEN '15-19'
+            WHEN mother_age BETWEEN 20 AND 24 THEN '20-24'
+            WHEN mother_age BETWEEN 25 AND 29 THEN '25-29'
+            WHEN mother_age BETWEEN 30 AND 34 THEN '30-34'
+            WHEN mother_age BETWEEN 35 AND 39 THEN '35-39'
+            ELSE '40+'
+        END AS age_group,
+        SUM(CASE WHEN gestation_weeks < 37 THEN 1 ELSE 0 END) AS premature_count,
+        COUNT(*) AS total_babies
+    FROM natality_1103
+    GROUP BY age_group
+)
+SELECT
+    age_group,
+    premature_count,
+    total_babies,
+    round(premature_count * 100.0 / total_babies, 2) AS percentage_premature,
+    (SELECT SUM(premature_count) FROM premature_births) AS total_premature_births,
+    (SELECT COUNT(*) FROM natality_1103) AS total_babies_total
+FROM premature_births
+ORDER BY age_group;
